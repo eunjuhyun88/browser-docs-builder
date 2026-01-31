@@ -1,12 +1,41 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { Header } from "@/components/Header";
+import { SectionIndicator } from "@/components/SectionIndicator";
+import { HeroSection } from "@/components/HeroSection";
+import { MarqueeSection } from "@/components/MarqueeSection";
+import { SystemStatus } from "@/components/SystemStatus";
+import { ApproachSection } from "@/components/ApproachSection";
+import { PricingSection } from "@/components/PricingSection";
+import { Footer } from "@/components/Footer";
 
 const Index = () => {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="mb-4 text-4xl font-bold">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
+    <div className="min-h-screen bg-background text-foreground">
+      <Header />
+      <SectionIndicator currentSection="PROTOCOL" sectionNumber="01" />
+      
+      {/* Hero Section with System Status */}
+      <div className="relative">
+        <HeroSection />
+        
+        {/* System Status Card - positioned over hero */}
+        <div className="container mx-auto px-6 relative z-20 -mt-20 pb-10">
+          <div className="max-w-2xl ml-auto lg:mr-20">
+            <SystemStatus />
+          </div>
+        </div>
       </div>
+      
+      {/* Marquee */}
+      <MarqueeSection />
+      
+      {/* Approach Section */}
+      <ApproachSection />
+      
+      {/* Pricing Section */}
+      <PricingSection />
+      
+      {/* Footer */}
+      <Footer />
     </div>
   );
 };
