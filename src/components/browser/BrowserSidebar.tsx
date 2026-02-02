@@ -5,7 +5,8 @@ import {
   ShoppingCart, 
   Wallet, 
   Settings,
-  Plus
+  Plus,
+  Plug
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -21,6 +22,7 @@ const mainNavItems: NavItem[] = [
   { id: "agent", icon: <Bot className="w-5 h-5" />, label: "Agent" },
   { id: "hub", icon: <ShoppingCart className="w-5 h-5" />, label: "HUB" },
   { id: "wallet", icon: <Wallet className="w-5 h-5" />, label: "Wallet" },
+  { id: "integrations", icon: <Plug className="w-5 h-5" />, label: "연동" },
 ];
 
 const bottomNavItems: NavItem[] = [
