@@ -9,6 +9,7 @@ import { AgentView } from "./views/AgentView";
 import { HubView } from "./views/HubView";
 import { WalletView } from "./views/WalletView";
 import { SettingsView } from "./views/SettingsView";
+import { IntegrationsView } from "./views/IntegrationsView";
 
 export function BrowserLayout() {
   const [activeTab, setActiveTab] = useState("home");
@@ -28,6 +29,8 @@ export function BrowserLayout() {
         return <WalletView />;
       case "settings":
         return <SettingsView />;
+      case "integrations":
+        return <IntegrationsView />;
       default:
         return <HomeView />;
     }
