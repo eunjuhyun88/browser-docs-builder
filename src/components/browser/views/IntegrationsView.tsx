@@ -8,11 +8,24 @@ import {
   Sparkles,
   Bot,
   Workflow,
-  Brain
+  Brain,
+  Eye,
+  EyeOff,
+  Key,
+  Loader2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 type IntegrationCategory = "llm" | "agent" | "automation" | "all";
 
@@ -26,10 +39,10 @@ interface Integration {
   popular?: boolean;
 }
 
-const integrations: Integration[] = [
+const initialIntegrations: Integration[] = [
   // LLM Providers
   { id: "openai", name: "OpenAI", description: "GPT-4, GPT-5 및 DALL-E 모델 연동", logo: "🤖", category: "llm", connected: false, popular: true },
-  { id: "anthropic", name: "Anthropic", description: "Claude 3.5 및 Claude 4 모델 연동", logo: "🧠", category: "llm", connected: true, popular: true },
+  { id: "anthropic", name: "Anthropic", description: "Claude 3.5 및 Claude 4 모델 연동", logo: "🧠", category: "llm", connected: false, popular: true },
   { id: "google-ai", name: "Google AI", description: "Gemini Pro, Gemini Ultra 모델 연동", logo: "🔮", category: "llm", connected: false, popular: true },
   { id: "cohere", name: "Cohere", description: "Command, Embed 모델 연동", logo: "💎", category: "llm", connected: false },
   { id: "mistral", name: "Mistral AI", description: "Mistral Large, Medium 모델 연동", logo: "🌀", category: "llm", connected: false },
@@ -44,7 +57,7 @@ const integrations: Integration[] = [
   { id: "semantic-kernel", name: "Semantic Kernel", description: "Microsoft AI 오케스트레이션 SDK", logo: "🎯", category: "agent", connected: false },
   
   // Automation Tools
-  { id: "zapier", name: "Zapier", description: "5000+ 앱 연동 자동화 플랫폼", logo: "⚙️", category: "automation", connected: true, popular: true },
+  { id: "zapier", name: "Zapier", description: "5000+ 앱 연동 자동화 플랫폼", logo: "⚙️", category: "automation", connected: false, popular: true },
   { id: "make", name: "Make", description: "비주얼 워크플로우 자동화 도구", logo: "🔧", category: "automation", connected: false, popular: true },
   { id: "n8n", name: "n8n", description: "오픈소스 워크플로우 자동화", logo: "🔄", category: "automation", connected: false },
   { id: "pipedream", name: "Pipedream", description: "개발자 친화적 통합 플랫폼", logo: "📡", category: "automation", connected: false },
@@ -59,9 +72,14 @@ const categories = [
 ];
 
 export function IntegrationsView() {
+  const [integrations, setIntegrations] = useState<Integration[]>(initialIntegrations);
   const [activeCategory, setActiveCategory] = useState<IntegrationCategory>("all");
   const [searchQuery, setSearchQuery] = useState("");
-  const [connectingId, setConnectingId] = useState<string | null>(null);
+  const [selectedIntegration, setSelectedIntegration] = useState<Integration | null>(null);
+  const [apiKey, setApiKey] = useState("");
+  const [showApiKey, setShowApiKey] = useState(false);
+  const [isConnecting, setIsConnecting] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   const filteredIntegrations = integrations.filter((integration) => {
     const matchesCategory = activeCategory === "all" || integration.category === activeCategory;
@@ -70,18 +88,134 @@ export function IntegrationsView() {
     return matchesCategory && matchesSearch;
   });
 
-  const handleConnect = (id: string) => {
-    setConnectingId(id);
-    // Simulate connection process
-    setTimeout(() => {
-      setConnectingId(null);
-    }, 2000);
+  const handleOpenConnectDialog = (integration: Integration) => {
+    setSelectedIntegration(integration);
+    setApiKey("");
+    setShowApiKey(false);
+    setDialogOpen(true);
+  };
+
+  const handleConnect = async () => {
+    if (!selectedIntegration || !apiKey.trim()) return;
+    
+    setIsConnecting(true);
+    
+    // Simulate API connection
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    
+    setIntegrations(prev => 
+      prev.map(i => 
+        i.id === selectedIntegration.id 
+          ? { ...i, connected: true } 
+          : i
+      )
+    );
+    
+    setIsConnecting(false);
+    setDialogOpen(false);
+    setApiKey("");
+    setSelectedIntegration(null);
+  };
+
+  const handleDisconnect = (id: string) => {
+    setIntegrations(prev => 
+      prev.map(i => 
+        i.id === id 
+          ? { ...i, connected: false } 
+          : i
+      )
+    );
   };
 
   const connectedCount = integrations.filter(i => i.connected).length;
 
   return (
     <div className="p-6 space-y-6">
+      {/* API Key Modal */}
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-3">
+              {selectedIntegration && (
+                <>
+                  <span className="text-2xl">{selectedIntegration.logo}</span>
+                  {selectedIntegration.name} 연동
+                </>
+              )}
+            </DialogTitle>
+            <DialogDescription>
+              {selectedIntegration?.name}의 API 키를 입력하여 연결하세요. API 키는 안전하게 암호화되어 저장됩니다.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="api-key" className="flex items-center gap-2">
+                <Key className="w-4 h-4" />
+                API 키
+              </Label>
+              <div className="relative">
+                <Input
+                  id="api-key"
+                  type={showApiKey ? "text" : "password"}
+                  placeholder="sk-xxxxxxxxxxxxxxxxxxxxxxxx"
+                  value={apiKey}
+                  onChange={(e) => setApiKey(e.target.value)}
+                  className="pr-10 font-mono"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8"
+                  onClick={() => setShowApiKey(!showApiKey)}
+                >
+                  {showApiKey ? (
+                    <EyeOff className="w-4 h-4" />
+                  ) : (
+                    <Eye className="w-4 h-4" />
+                  )}
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {selectedIntegration?.id === "openai" && "OpenAI 대시보드에서 API 키를 발급받을 수 있습니다."}
+                {selectedIntegration?.id === "anthropic" && "Anthropic Console에서 API 키를 발급받을 수 있습니다."}
+                {selectedIntegration?.id === "google-ai" && "Google AI Studio에서 API 키를 발급받을 수 있습니다."}
+                {!["openai", "anthropic", "google-ai"].includes(selectedIntegration?.id || "") && 
+                  `${selectedIntegration?.name} 공식 사이트에서 API 키를 발급받을 수 있습니다.`}
+              </p>
+            </div>
+          </div>
+
+          <DialogFooter className="flex gap-2 sm:gap-0">
+            <Button
+              variant="outline"
+              onClick={() => setDialogOpen(false)}
+              disabled={isConnecting}
+            >
+              취소
+            </Button>
+            <Button
+              onClick={handleConnect}
+              disabled={!apiKey.trim() || isConnecting}
+              className="gap-2"
+            >
+              {isConnecting ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  연결 중...
+                </>
+              ) : (
+                <>
+                  <Plug className="w-4 h-4" />
+                  연결하기
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -165,17 +299,21 @@ export function IntegrationsView() {
                   </div>
                   <div className="mt-4 flex gap-2">
                     {integration.connected ? (
-                      <Button variant="outline" size="sm" className="flex-1">
-                        설정
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="flex-1"
+                        onClick={() => handleDisconnect(integration.id)}
+                      >
+                        연결 해제
                       </Button>
                     ) : (
                       <Button
                         size="sm"
                         className="flex-1"
-                        onClick={() => handleConnect(integration.id)}
-                        disabled={connectingId === integration.id}
+                        onClick={() => handleOpenConnectDialog(integration)}
                       >
-                        {connectingId === integration.id ? "연결 중..." : "연결"}
+                        연결
                       </Button>
                     )}
                     <Button variant="ghost" size="icon">
@@ -234,18 +372,21 @@ export function IntegrationsView() {
                       <Check className="w-3 h-3 text-neon-green" />
                       연결됨
                     </Button>
-                    <Button variant="ghost" size="sm">
-                      설정
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => handleDisconnect(integration.id)}
+                    >
+                      해제
                     </Button>
                   </>
                 ) : (
                   <Button
                     size="sm"
                     className="flex-1"
-                    onClick={() => handleConnect(integration.id)}
-                    disabled={connectingId === integration.id}
+                    onClick={() => handleOpenConnectDialog(integration)}
                   >
-                    {connectingId === integration.id ? "연결 중..." : "연결하기"}
+                    연결하기
                   </Button>
                 )}
               </div>
